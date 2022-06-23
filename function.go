@@ -5,32 +5,47 @@ import (
 	"reflect"
 )
 
-type Function interface {
-	Call(params ...Variable) []Variable
+type function reflect.Value
+
+func (f function) GetValue() reflect.Value {
+	return reflect.Value(f)
 }
 
-type function struct {
-	parameterSignatureList []VariableSignature
-	resultSignatureList    []VariableSignature
-	value                  Value
+func (f function) GetParamList() []reflect.Kind {
+	result := []reflect.Kind{}
+	reflectType := f.GetValue().Type()
+	for i := 0; i < reflectType.NumIn(); i++ {
+		result = append(result, reflectType.In(i).Kind())
+	}
+	return result
 }
 
-func (f function) ValidateArguments(params ...Variable) error {
-	if len(params) != len(f.parameterSignatureList) {
+func (f function) GetReturnList() []reflect.Kind {
+	result := []reflect.Kind{}
+	reflectType := f.GetValue().Type()
+	for i := 0; i < reflectType.NumOut(); i++ {
+		result = append(result, reflectType.Out(i).Kind())
+	}
+	return result
+}
+
+func (f function) ValidateParams(params ...reflect.Kind) error {
+	expectedParams := f.GetParamList()
+	if len(params) != len(expectedParams) {
 		return fmt.Errorf("%w - argument length invalid want: %d, got: %d",
 			ErrInvalidFunctionArguments,
-			len(f.parameterSignatureList),
+			len(expectedParams),
 			len(params),
 		)
 	}
 
-	for index, signature := range f.parameterSignatureList {
-		if signature.GetKind() != params[index].GetVariableSignature().GetKind() {
+	for index, kind := range expectedParams {
+		if kind != params[index] {
 			return fmt.Errorf("%w - argument kind invalid at index: %d, want: %v, got: %v",
 				ErrInvalidFunctionArguments,
 				index,
-				signature.GetKind(),
-				params[index].GetVariableSignature().GetKind(),
+				kind,
+				params[index],
 			)
 		}
 	}
@@ -38,27 +53,27 @@ func (f function) ValidateArguments(params ...Variable) error {
 	return nil
 }
 
-func (f function) Call(params ...Variable) ([]Variable, error) {
-	if err := f.ValidateArguments(params...); err != nil {
+func (f function) Call(params ...variable) ([]variable, error) {
+	values := []reflect.Value{}
+	for _, param := range params {
+		values = append(values, param.GetValue())
+	}
+
+	kinds := []reflect.Kind{}
+	for _, param := range values {
+		kinds = append(kinds, param.Kind())
+	}
+
+	if err := f.ValidateParams(kinds...); err != nil {
 		return nil, err
 	}
 
-	arguments := []reflect.Value{}
-	for _, param := range params {
-		arguments = append(arguments, reflect.Value(param.GetValue()))
+	callResults := f.GetValue().Call(values)
+
+	results := []variable{}
+	for _, result := range callResults {
+		results = append(results, variable(result))
 	}
 
-	callResultList := reflect.Value(f.value).Call(arguments)
-	resultList := []Variable{}
-
-	for index, signature := range f.resultSignatureList {
-		variable := Variable{
-			signature: signature,
-			value:     Value(callResultList[index]),
-		}
-
-		resultList = append(resultList, variable)
-	}
-
-	return resultList, nil
+	return results, nil
 }
