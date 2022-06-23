@@ -78,9 +78,13 @@ func (f function) Call(params ...variable) ([]variable, error) {
 	return results, nil
 }
 
-func NewFunction(value reflect.Value) (function, error) {
+func NewFunction(value reflect.Value) function {
 	if value.Kind() != reflect.Func {
-		return function{}, fmt.Errorf("%w - want: %s, got: %s", ErrInvalidValueKind, reflect.Func.String(), reflect.Func.String())
+		panic(fmt.Errorf("%w - want: %s, got: %s", ErrInvalidValueKind, reflect.Func.String(), reflect.Func.String()))
 	}
-	return function(value), nil
+	return function(value)
+}
+
+func IsFunctionKind(kind reflect.Kind) bool {
+	return kind == reflect.Func
 }

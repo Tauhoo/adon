@@ -29,3 +29,19 @@ func (vm *Storage[T]) GetList() []Record[T] {
 	}
 	return list
 }
+
+func (vm *Storage[T]) GetByFilter(filter func(Record[T]) bool) []Record[T] {
+	list := []Record[T]{}
+	for _, v := range vm.valueMap {
+		if filter(v) {
+			list = append(list, v)
+		}
+	}
+	return list
+}
+
+func NewStorage[T any]() Storage[T] {
+	return Storage[T]{
+		valueMap: map[string]Record[T]{},
+	}
+}

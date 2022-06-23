@@ -29,10 +29,14 @@ func (v variable) GetValue() reflect.Value {
 	return reflect.Value(v)
 }
 
-func NewVariable(value reflect.Value) (function, error) {
-	isPrimitive := primitiveKind[value.Kind()]
-	if isPrimitive {
-		return function{}, fmt.Errorf("%w - want: %s, got: %s", ErrInvalidValueKind, reflect.Func.String(), value.Kind().String())
+func NewVariable(value reflect.Value) variable {
+	if IsVariableKind(value.Kind()) {
+		panic(fmt.Errorf("%w - want: %s, got: %s", ErrInvalidValueKind, reflect.Func.String(), value.Kind().String()))
 	}
-	return function(value), nil
+	return variable(value)
+}
+
+func IsVariableKind(kind reflect.Kind) bool {
+	_, isPrimitive := primitiveKind[kind]
+	return isPrimitive
 }
