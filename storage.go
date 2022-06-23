@@ -1,24 +1,29 @@
 package adon
 
-type Storage[T any] struct {
-	valueMap map[string]T
+type Record[T any] struct {
+	value T
+	name  string
 }
 
-func (vm *Storage[T]) Set(name string, value T) {
-	vm.valueMap[name] = value
+type Storage[T any] struct {
+	valueMap map[string]Record[T]
+}
+
+func (vm *Storage[T]) Set(record Record[T]) {
+	vm.valueMap[record.name] = record
 }
 
 func (vm *Storage[T]) Delete(name string) {
 	delete(vm.valueMap, name)
 }
 
-func (vm *Storage[T]) Find(name string) (T, bool) {
+func (vm *Storage[T]) Find(name string) (Record[T], bool) {
 	value, ok := vm.valueMap[name]
 	return value, ok
 }
 
-func (vm *Storage[T]) GetList() []T {
-	list := []T{}
+func (vm *Storage[T]) GetList() []Record[T] {
+	list := []Record[T]{}
 	for _, v := range vm.valueMap {
 		list = append(list, v)
 	}

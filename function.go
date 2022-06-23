@@ -77,3 +77,10 @@ func (f function) Call(params ...variable) ([]variable, error) {
 
 	return results, nil
 }
+
+func NewFunction(value reflect.Value) (function, error) {
+	if value.Kind() != reflect.Func {
+		return function{}, fmt.Errorf("%w - want: %s, got: %s", ErrInvalidValueKind, reflect.Func.String(), reflect.Func.String())
+	}
+	return function(value), nil
+}
