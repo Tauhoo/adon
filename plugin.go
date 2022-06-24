@@ -6,21 +6,27 @@ import (
 	"reflect"
 )
 
+type Plugin interface {
+	GetName() string
+	GetVariableStorage() VariableStorage
+	GetFunctionStorage() FunctionStorage
+}
+
 type plugin struct {
 	name            string
-	functionStorage Storage[function]
-	variableStorage Storage[variable]
+	functionStorage FunctionStorage
+	variableStorage VariableStorage
 }
 
 func (p plugin) GetName() string {
 	return p.name
 }
 
-func (p plugin) GetVariableStorage() Storage[variable] {
+func (p plugin) GetVariableStorage() VariableStorage {
 	return p.variableStorage
 }
 
-func (p plugin) GetFunctionStorage() Storage[function] {
+func (p plugin) GetFunctionStorage() FunctionStorage {
 	return p.functionStorage
 }
 
@@ -39,18 +45,18 @@ func GetValueMapFromGoPlugin(goPlugin goplugin.Plugin) map[string]reflect.Value 
 	return valueMap
 }
 
-func NewPlugin(name string, valueMap map[string]reflect.Value) plugin {
-	functionStorage := NewStorage[function]()
-	variableStorage := NewStorage[variable]()
+func NewPlugin(name string, valueMap map[string]reflect.Value) Plugin {
+	functionStorage := NewFunctionStorage()
+	variableStorage := NewVariableStorage()
 	for k, v := range valueMap {
 		switch {
 		case IsFunctionKind(v.Kind()):
-			functionStorage.Set(Record[function]{
+			functionStorage.Set(Record[Function]{
 				name:  k,
 				value: NewFunction(v),
 			})
 		case IsVariableKind(v.Kind()):
-			variableStorage.Set(Record[variable]{
+			variableStorage.Set(Record[Variable]{
 				name:  k,
 				value: NewVariable(v),
 			})

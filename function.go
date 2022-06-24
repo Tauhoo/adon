@@ -5,6 +5,20 @@ import (
 	"reflect"
 )
 
+type Function interface {
+	GetValue() reflect.Value
+	GetParamList() []reflect.Kind
+	GetReturnList() []reflect.Kind
+	ValidateParams(params ...reflect.Kind) error
+	Call(params ...Variable) ([]Variable, error)
+}
+
+type FunctionStorage = Storage[Function]
+
+func NewFunctionStorage() FunctionStorage {
+	return newStorage[Function]()
+}
+
 type function reflect.Value
 
 func (f function) GetValue() reflect.Value {
@@ -53,7 +67,7 @@ func (f function) ValidateParams(params ...reflect.Kind) error {
 	return nil
 }
 
-func (f function) Call(params ...variable) ([]variable, error) {
+func (f function) Call(params ...Variable) ([]Variable, error) {
 	values := []reflect.Value{}
 	for _, param := range params {
 		values = append(values, param.GetValue())
@@ -70,15 +84,15 @@ func (f function) Call(params ...variable) ([]variable, error) {
 
 	callResults := f.GetValue().Call(values)
 
-	results := []variable{}
+	results := []Variable{}
 	for _, result := range callResults {
-		results = append(results, variable(result))
+		results = append(results, NewVariable(result))
 	}
 
 	return results, nil
 }
 
-func NewFunction(value reflect.Value) function {
+func NewFunction(value reflect.Value) Function {
 	if value.Kind() != reflect.Func {
 		panic(fmt.Errorf("%w - want: %s, got: %s", ErrInvalidValueKind, reflect.Func.String(), reflect.Func.String()))
 	}

@@ -5,6 +5,16 @@ import (
 	"reflect"
 )
 
+type Variable interface {
+	GetValue() reflect.Value
+}
+
+type VariableStorage = Storage[Variable]
+
+func NewVariableStorage() VariableStorage {
+	return newStorage[Variable]()
+}
+
 type variable reflect.Value
 
 var primitiveKind = map[reflect.Kind]bool{
@@ -29,7 +39,7 @@ func (v variable) GetValue() reflect.Value {
 	return reflect.Value(v)
 }
 
-func NewVariable(value reflect.Value) variable {
+func NewVariable(value reflect.Value) Variable {
 	if IsVariableKind(value.Kind()) {
 		panic(fmt.Errorf("%w - want: %s, got: %s", ErrInvalidValueKind, reflect.Func.String(), value.Kind().String()))
 	}
