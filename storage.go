@@ -1,8 +1,8 @@
 package adon
 
 type Record[T any] struct {
-	value T
-	name  string
+	Value T
+	Name  string
 }
 
 type Storage[T any] interface {
@@ -11,6 +11,7 @@ type Storage[T any] interface {
 	Find(name string) (Record[T], bool)
 	GetList() []Record[T]
 	GetByFilter(filter func(Record[T]) bool) []Record[T]
+	DeleteAll()
 }
 
 type storage[T any] struct {
@@ -18,7 +19,7 @@ type storage[T any] struct {
 }
 
 func (vm *storage[T]) Set(record Record[T]) {
-	vm.valueMap[record.name] = record
+	vm.valueMap[record.Name] = record
 }
 
 func (vm *storage[T]) Delete(name string) {
@@ -46,6 +47,10 @@ func (vm *storage[T]) GetByFilter(filter func(Record[T]) bool) []Record[T] {
 		}
 	}
 	return list
+}
+
+func (vm storage[T]) DeleteAll() {
+	vm.valueMap = map[string]Record[T]{}
 }
 
 func newStorage[T any]() Storage[T] {

@@ -1,7 +1,7 @@
 package adon
 
 import (
-	"fmt"
+	"path/filepath"
 	goplugin "plugin"
 	"reflect"
 )
@@ -10,6 +10,12 @@ type Plugin interface {
 	GetName() string
 	GetVariableStorage() VariableStorage
 	GetFunctionStorage() FunctionStorage
+}
+
+type PluginStorage = Storage[Plugin]
+
+func NewPluginStorage() PluginStorage {
+	return newStorage[Plugin]()
 }
 
 type plugin struct {
@@ -30,35 +36,43 @@ func (p plugin) GetFunctionStorage() FunctionStorage {
 	return p.functionStorage
 }
 
-func GetValueMapFromGoPlugin(goPlugin goplugin.Plugin) map[string]reflect.Value {
-	iter := reflect.ValueOf(goPlugin).FieldByName("syms").MapRange()
-	valueMap := map[string]reflect.Value{}
+func NewPluginFromFile(path string) (Plugin, error) {
+	goPlugin, err := goplugin.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	iter := reflect.ValueOf(*goPlugin).FieldByName("syms").MapRange()
+	valueRecords := []Record[reflect.Value]{}
 	for iter.Next() {
 		key := iter.Key().String()
-		s, err := goPlugin.Lookup(key)
+		symbol, err := goPlugin.Lookup(key)
 		if err != nil {
-			panic(fmt.Errorf("%w - look up for symbol fail symbol: %s", err, key))
+			return nil, err
 		}
-		value := reflect.ValueOf(s)
-		valueMap[key] = value
+		valueRecords = append(valueRecords, Record[reflect.Value]{
+			Name:  key,
+			Value: reflect.ValueOf(symbol),
+		})
 	}
-	return valueMap
+
+	return NewPlugin(filepath.Base(path), valueRecords), nil
 }
 
-func NewPlugin(name string, valueMap map[string]reflect.Value) Plugin {
+func NewPlugin(name string, recordList []Record[reflect.Value]) Plugin {
 	functionStorage := NewFunctionStorage()
 	variableStorage := NewVariableStorage()
-	for k, v := range valueMap {
+	for _, record := range recordList {
 		switch {
-		case IsFunctionKind(v.Kind()):
+		case IsFunctionKind(record.Value.Kind()):
 			functionStorage.Set(Record[Function]{
-				name:  k,
-				value: NewFunction(v),
+				Name:  record.Name,
+				Value: NewFunction(record.Value),
 			})
-		case IsVariableKind(v.Kind()):
+		case IsVariableKind(record.Value.Kind()):
 			variableStorage.Set(Record[Variable]{
-				name:  k,
-				value: NewVariable(v),
+				Name:  record.Name,
+				Value: NewVariable(record.Value),
 			})
 		}
 	}
