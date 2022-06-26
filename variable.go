@@ -50,3 +50,11 @@ func IsVariableKind(kind reflect.Kind) bool {
 	_, isPrimitive := primitiveKind[kind]
 	return isPrimitive
 }
+
+func ConvertVariableListToKindList(variableList []Variable) []reflect.Kind {
+	kindList := []reflect.Kind{}
+	for _, vavariable := range variableList {
+		kindList = append(kindList, vavariable.GetValue().Kind())
+	}
+	return kindList
+}
