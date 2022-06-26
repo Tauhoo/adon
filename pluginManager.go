@@ -11,6 +11,7 @@ type PluginManager interface {
 }
 
 type pluginManager struct {
+	jobInstance   Job
 	pluginStorage PluginStorage
 }
 
@@ -19,7 +20,7 @@ func (p pluginManager) GetPluginStorage() PluginStorage {
 }
 
 func (p pluginManager) LoadPluginFromFile(path string) error {
-	plugin, err := NewPluginFromFile(path)
+	plugin, err := NewPluginFromFile(p.jobInstance, path)
 	if err != nil {
 		return err
 	}
@@ -48,8 +49,9 @@ func (p pluginManager) LoadPluginFromFolder(path string) error {
 	return nil
 }
 
-func NewPluginManager() PluginManager {
+func NewPluginManager(jobInstance Job) PluginManager {
 	return pluginManager{
+		jobInstance:   jobInstance,
 		pluginStorage: NewPluginStorage(),
 	}
 }

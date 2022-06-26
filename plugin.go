@@ -9,7 +9,7 @@ import (
 type Plugin interface {
 	GetName() string
 	GetVariableStorage() VariableStorage
-	GetFunctionStorage() FunctionStorage
+	GetExecutorStorage() ExecutorStorage
 }
 
 type PluginStorage = Storage[Plugin]
@@ -20,7 +20,7 @@ func NewPluginStorage() PluginStorage {
 
 type plugin struct {
 	name            string
-	functionStorage FunctionStorage
+	executorStorage ExecutorStorage
 	variableStorage VariableStorage
 }
 
@@ -32,11 +32,11 @@ func (p plugin) GetVariableStorage() VariableStorage {
 	return p.variableStorage
 }
 
-func (p plugin) GetFunctionStorage() FunctionStorage {
-	return p.functionStorage
+func (p plugin) GetExecutorStorage() ExecutorStorage {
+	return p.executorStorage
 }
 
-func NewPluginFromFile(path string) (Plugin, error) {
+func NewPluginFromFile(jobInstance Job, path string) (Plugin, error) {
 	goPlugin, err := goplugin.Open(path)
 	if err != nil {
 		return nil, err
@@ -56,18 +56,18 @@ func NewPluginFromFile(path string) (Plugin, error) {
 		})
 	}
 
-	return NewPlugin(filepath.Base(path), valueRecords), nil
+	return NewPlugin(jobInstance, filepath.Base(path), valueRecords), nil
 }
 
-func NewPlugin(name string, recordList []Record[reflect.Value]) Plugin {
-	functionStorage := NewFunctionStorage()
+func NewPlugin(jobInstance Job, name string, recordList []Record[reflect.Value]) Plugin {
+	executorStorage := NewExecutorStorage()
 	variableStorage := NewVariableStorage()
 	for _, record := range recordList {
 		switch {
 		case IsFunctionKind(record.Value.Kind()):
-			functionStorage.Set(Record[Function]{
+			executorStorage.Set(Record[Executor]{
 				Name:  record.Name,
-				Value: NewFunction(record.Value),
+				Value: NewExecutor(NewFunction(record.Value), jobInstance),
 			})
 		case IsVariableKind(record.Value.Kind()):
 			variableStorage.Set(Record[Variable]{
@@ -78,7 +78,7 @@ func NewPlugin(name string, recordList []Record[reflect.Value]) Plugin {
 	}
 
 	return plugin{
-		functionStorage: functionStorage,
+		executorStorage: executorStorage,
 		variableStorage: variableStorage,
 		name:            name,
 	}
