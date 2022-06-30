@@ -34,7 +34,7 @@ func (p pluginManager) LoadPluginFromFile(path string) error {
 }
 
 func (p pluginManager) LoadPluginFromFolder(path string) error {
-	files, err := ioutil.ReadDir("./")
+	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		return err
 	}
