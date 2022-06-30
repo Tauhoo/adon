@@ -134,10 +134,10 @@ func (e executorStorage) Delete(name string) {
 	e.storage.Delete(name)
 }
 func (e executorStorage) Find(name string) (Record[Executor], bool) {
-	return e.Find(name)
+	return e.storage.Find(name)
 }
 func (e executorStorage) GetList() []Record[Executor] {
-	return e.GetList()
+	return e.storage.GetList()
 }
 func (e executorStorage) GetByFilter(filter func(Record[Executor]) bool) []Record[Executor] {
 	return e.storage.GetByFilter(filter)
