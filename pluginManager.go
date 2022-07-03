@@ -2,6 +2,7 @@ package adon
 
 import (
 	"io/ioutil"
+	"path"
 )
 
 type PluginManager interface {
@@ -33,14 +34,14 @@ func (p pluginManager) LoadPluginFromFile(path string) error {
 	return nil
 }
 
-func (p pluginManager) LoadPluginFromFolder(path string) error {
-	files, err := ioutil.ReadDir(path)
+func (p pluginManager) LoadPluginFromFolder(folderPath string) error {
+	files, err := ioutil.ReadDir(folderPath)
 	if err != nil {
 		return err
 	}
 
 	for _, file := range files {
-		if err := p.LoadPluginFromFile(file.Name()); err != nil {
+		if err := p.LoadPluginFromFile(path.Join(folderPath, file.Name())); err != nil {
 			p.GetPluginStorage().DeleteAll()
 			return err
 		}
