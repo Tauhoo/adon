@@ -9,6 +9,17 @@ const (
 	ExecuteDone
 )
 
+var executeStateToStringMap = map[ExecuteState]string{
+	ExecuteIdle:    "IDLE",
+	ExecuteError:   "ERROR",
+	ExecuteRunning: "RUNNING",
+	ExecuteDone:    "DONE",
+}
+
+func (e ExecuteState) String() string {
+	return executeStateToStringMap[e]
+}
+
 type StateEventListener = func(state ExecuteState, info any)
 
 type StateEventPubliser interface {
