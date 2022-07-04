@@ -39,8 +39,8 @@ func (v variable) GetValue() reflect.Value {
 }
 
 func NewVariable(value reflect.Value) Variable {
-	if IsVariableKind(value.Kind()) {
-		panic(fmt.Errorf("%w - want: %s, got: %s", ErrInvalidValueKind, reflect.Func.String(), value.Kind().String()))
+	if !IsVariableKind(value.Kind()) {
+		panic(fmt.Errorf("%w - got: %s", ErrInvalidValueKind, value.Kind().String()))
 	}
 	return variable(value)
 }

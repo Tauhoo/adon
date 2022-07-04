@@ -23,7 +23,6 @@ func (j job) Stop() {
 
 func (j job) Exec(fn func()) chan<- JobAction {
 	jobActionChanel := make(chan JobAction)
-
 	wrapFunction := func() {
 		doneChannel := make(chan bool)
 		go func() {
@@ -40,9 +39,7 @@ func (j job) Exec(fn func()) chan<- JobAction {
 			}
 		}
 	}
-
 	j.functionChanel <- wrapFunction
-
 	return jobActionChanel
 }
 

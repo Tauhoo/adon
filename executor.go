@@ -24,8 +24,8 @@ type StateEventListener = func(state ExecuteState, info any)
 
 type StateEventPubliser interface {
 	GetState() ExecuteState
-	publish(state ExecuteState, info any)
-	listen(state ExecuteState, fn StateEventListener)
+	Publish(state ExecuteState, info any)
+	Listen(state ExecuteState, fn StateEventListener)
 }
 
 type stateEventPubliser struct {
@@ -37,7 +37,7 @@ func (s stateEventPubliser) GetState() ExecuteState {
 	return s.state
 }
 
-func (s stateEventPubliser) publish(state ExecuteState, info any) {
+func (s stateEventPubliser) Publish(state ExecuteState, info any) {
 	s.state = state
 	listenerList, ok := s.mapper[state]
 	if !ok {
@@ -49,7 +49,7 @@ func (s stateEventPubliser) publish(state ExecuteState, info any) {
 		listener(state, info)
 	}
 }
-func (s stateEventPubliser) listen(state ExecuteState, fn StateEventListener) {
+func (s stateEventPubliser) Listen(state ExecuteState, fn StateEventListener) {
 	listenerList, ok := s.mapper[state]
 	if ok {
 		listenerList = append(listenerList, fn)
@@ -69,7 +69,7 @@ type Executor interface {
 	Execute(params ...Variable)
 	Stop()
 	GetFunction() Function
-	GetState() ExecuteState
+	GetStateEventPubliser() StateEventPubliser
 }
 
 type executor struct {
@@ -79,22 +79,25 @@ type executor struct {
 	jobChannel         chan<- JobAction
 }
 
+func (e *executor) GetStateEventPubliser() StateEventPubliser {
+	return e.stateEventPubliser
+}
+
 func (e *executor) Execute(params ...Variable) {
 	e.Stop()
-
 	kindList := ConvertVariableListToKindList(params)
 	if err := e.function.ValidateParams(kindList...); err != nil {
-		e.stateEventPubliser.publish(ExecuteError, err)
+		e.stateEventPubliser.Publish(ExecuteError, err)
 		return
 	}
 
-	e.stateEventPubliser.publish(ExecuteRunning, e)
+	e.stateEventPubliser.Publish(ExecuteRunning, e)
 	fn := func() {
 		result, err := e.function.Call(params...)
 		if err != nil {
-			e.stateEventPubliser.publish(ExecuteError, err)
+			e.stateEventPubliser.Publish(ExecuteError, err)
 		} else {
-			e.stateEventPubliser.publish(ExecuteDone, result)
+			e.stateEventPubliser.Publish(ExecuteDone, result)
 		}
 	}
 
@@ -109,10 +112,6 @@ func (e executor) Stop() {
 
 func (e executor) GetFunction() Function {
 	return e.function
-}
-
-func (e executor) GetState() ExecuteState {
-	return e.stateEventPubliser.GetState()
 }
 
 func NewExecutor(fn Function, jobInstance Job) Executor {
