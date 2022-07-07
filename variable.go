@@ -6,6 +6,7 @@ import (
 )
 
 type Variable interface {
+	GetPointerValue() reflect.Value
 	GetValue() reflect.Value
 }
 
@@ -35,18 +36,27 @@ var primitiveKind = map[reflect.Kind]bool{
 }
 
 func (v variable) GetValue() reflect.Value {
+	return reflect.Value(v).Elem()
+}
+
+func (v variable) GetPointerValue() reflect.Value {
 	return reflect.Value(v)
 }
 
 func NewVariable(value reflect.Value) Variable {
-	if !IsVariableKind(value.Kind()) {
+	if !IsVariableKind(value) {
 		panic(fmt.Errorf("%w - got: %s", ErrInvalidValueKind, value.Kind().String()))
 	}
 	return variable(value)
 }
 
-func IsVariableKind(kind reflect.Kind) bool {
-	_, isPrimitive := primitiveKind[kind]
+func IsVariableKind(value reflect.Value) bool {
+	if value.Kind() != reflect.Ptr {
+		return false
+	}
+
+	realKind := value.Elem().Kind()
+	_, isPrimitive := primitiveKind[realKind]
 	return isPrimitive
 }
 

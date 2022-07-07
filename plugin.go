@@ -50,6 +50,7 @@ func NewPluginFromFile(jobInstance Job, path string) (Plugin, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		valueRecords = append(valueRecords, Record[reflect.Value]{
 			Name:  key,
 			Value: reflect.ValueOf(symbol),
@@ -69,7 +70,7 @@ func NewPlugin(jobInstance Job, name string, recordList []Record[reflect.Value])
 				Name:  record.Name,
 				Value: NewExecutor(NewFunction(record.Value), jobInstance),
 			})
-		case IsVariableKind(record.Value.Kind()):
+		case IsVariableKind(record.Value):
 			variableStorage.Set(Record[Variable]{
 				Name:  record.Name,
 				Value: NewVariable(record.Value),
