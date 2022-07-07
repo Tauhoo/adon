@@ -43,7 +43,7 @@ func (v variable) GetPointerValue() reflect.Value {
 	return reflect.Value(v)
 }
 
-func NewVariable(value reflect.Value) Variable {
+func NewVariableFromPointer(value reflect.Value) Variable {
 	if !IsVariableKind(value) {
 		panic(fmt.Errorf("%w - got: %s", ErrInvalidValueKind, value.Kind().String()))
 	}

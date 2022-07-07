@@ -72,7 +72,6 @@ func (f function) Call(params ...Variable) ([]Variable, error) {
 	for _, param := range params {
 		values = append(values, param.GetValue())
 	}
-
 	kinds := []reflect.Kind{}
 	for _, param := range values {
 		kinds = append(kinds, param.Kind())
@@ -86,7 +85,9 @@ func (f function) Call(params ...Variable) ([]Variable, error) {
 
 	results := []Variable{}
 	for _, result := range callResults {
-		results = append(results, NewVariable(result))
+		pointerReflectValue := reflect.New(result.Type())
+		pointerReflectValue.Elem().Set(result)
+		results = append(results, NewVariableFromPointer(pointerReflectValue))
 	}
 
 	return results, nil

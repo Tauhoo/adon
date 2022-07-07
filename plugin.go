@@ -73,7 +73,7 @@ func NewPlugin(jobInstance Job, name string, recordList []Record[reflect.Value])
 		case IsVariableKind(record.Value):
 			variableStorage.Set(Record[Variable]{
 				Name:  record.Name,
-				Value: NewVariable(record.Value),
+				Value: NewVariableFromPointer(record.Value),
 			})
 		}
 	}
